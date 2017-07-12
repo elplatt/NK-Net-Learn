@@ -2,7 +2,6 @@ import random
 
 def nk_to_network(model, nodes_per_locus, rewire=0):
     edges_node_loc = nk_to_affiliation(model, nodes_per_locus)
-    print "%d agent-cell edges" % len(edges_node_loc)
     if rewire > 0:
         rewire_affiliation(model, edges_node_loc, rewire)
     edges_node = affiliation_to_node(edges_node_loc)
@@ -38,12 +37,20 @@ def nk_to_affiliation(model, nodes_per_locus):
 def rewire_affiliation(model, edges_node_loc, rewire):
     # Rewire the node-locus affiliation network        
     rewire_count = int(len(edges_node_loc) * rewire)
+    # Ensure multiple of 2
+    rewire_count = int(rewire_count / 2.0) * 2
+    # Get shuffled sample of edges
     to_rewire = random.sample(range(len(edges_node_loc)), rewire_count)
-    for e in to_rewire:
-        edge = edges_node_loc[e]
-        node = edge[0]
-        new_loc = random.choice(range(model.N))
-        edges_node_loc[e] = (node, new_loc)
+    random.shuffle(to_rewire)
+    # Split sample in two and swap locations
+    sources = to_rewire[:len(to_rewire)/2]
+    targets = to_rewire[len(to_rewire)/2:]
+    for e in sources:
+        t = targets.pop()
+        source_node, source_loc = edges_node_loc[e]
+        target_node, target_loc = edges_node_loc[t]
+        edges_node_loc[e] = (source_node, target_loc)
+        edges_node_loc[t] = (target_node, source_loc)
 
 def affiliation_to_node(edges_node_loc):
     # Construct node-node network
