@@ -2,6 +2,7 @@ import random
 
 def nk_to_network(model, nodes_per_locus, rewire=0):
     edges_node_loc = nk_to_affiliation(model, nodes_per_locus)
+    print "%d agent-cell edges" % len(edges_node_loc)
     if rewire > 0:
         rewire_affiliation(model, edges_node_loc, rewire)
     edges_node = affiliation_to_node(edges_node_loc)
@@ -11,10 +12,26 @@ def nk_to_affiliation(model, nodes_per_locus):
     # Construct affilation network connecting each node to a locus and its neighbors
     edges_node_loc = []
     node = 0
+    # Construct reverse map for NK dependence
+    rev_dependence = {}
+    for n in range(model.N):
+        for d in model.dependence[n]:
+            try:
+                rev_dependence[d].add(n)
+            except KeyError:
+                rev_dependence[d] = set([n])
+    # Add affiliation edges
     for n in range(model.N):
         for i in range(nodes_per_locus):
+            # Follow forward NK edges
             for d in model.dependence[n]:
                 edges_node_loc.append( (node, d) )
+            # Follow reverse NK edges
+            try:
+                for d in rev_dependence[n]:
+                    edges_node_loc.append( (node, d) )
+            except KeyError:
+                pass
             node += 1
     return edges_node_loc
 
