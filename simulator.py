@@ -7,6 +7,7 @@ class Simulator(object):
         self.model = model
         self.edges = edges
         self.nodes = sorted(edges.keys())
+        self.node_count = len(self.nodes)
         self.values = []
         if strat is None:
             self.strategy = strategy.BestNeighbor(model, edges)
@@ -15,17 +16,14 @@ class Simulator(object):
     
     def run(self, steps):
         self.init_state()
-        next_state = {}
+        next_values = self.model.get_values(self.states)
+        self.values.append(sum(next_values) / float(len(self.nodes)))
         for i in range(steps):
-            step_total = 0
-            for n in self.nodes:
-                current_value = self.model.get_value(self.state[n])
-                step_total += current_value
-                next_state[n] = self.strategy.get_next(self.state, n)
-            self.state = next_state
-            self.values.append(step_total / float(len(self.nodes)))
+            next_states, next_values = self.strategy.get_next(self.states, next_values)
+            self.states = next_states
+            self.values.append(sum(next_values) / float(len(self.nodes)))
             
     def init_state(self):
-        self.state = {}
-        for n in self.nodes:
-            self.state[n] = [random.getrandbits(1) for i in range(self.model.N)]
+        self.states = [
+            [random.getrandbits(1) for i in range(self.model.N)]
+            for j in range(self.node_count)]
