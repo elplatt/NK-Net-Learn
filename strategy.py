@@ -46,15 +46,9 @@ class Individual(Strategy):
     def get_next(self, states, values):
         new_states = []
         new_values = []
-        trial_states = []
         N = self.model.N
         loci = range(N)
-        for state in states:
-            for i in loci:
-                new_state = list(state)
-                new_state[i] = 1 - new_state[i]
-                trial_states.append(new_state)
-        trial_values = self.model.get_values(trial_states)
+        trial_states, trial_values = self.model.get_hillclimb_values(states)
         current_values = values
         for n in self.nodes:
             next_value = current_values[n]
