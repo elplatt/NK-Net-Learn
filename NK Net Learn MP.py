@@ -124,13 +124,13 @@ def worker(task_queue, result_queue):
 
 
 num_workers = 12
-per_rewire = 25
-steps = 75
-Ns = [250]
+per_rewire = 20
+steps = 50
+Ns = [100]
 Ks = [4]
 Ds = [2]
 rs = [0.0, 0.33, 0.67, 1.0]
-samples = [3]
+samples = [3, 0]
 
 exp = logbook.Experiment("nk_rewire")
 
