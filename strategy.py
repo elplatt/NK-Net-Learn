@@ -152,12 +152,12 @@ class LocalIndividual(Strategy):
         self.loc_by_node = dict([(n, set()) for n in xrange(self.node_count)])
         if structured:
             # Use NK structure for choosing hill-climbing loci
-            self.concern = self.loc_by_node
+            self.concern = [self.loc_by_node[n] for n in self.nodes]
         else:
             # Randomly choose hill-climbing loci
             loci = range(model.N)
             K = model.K
-            self.concern = dict([(n, set(random.sample(loci, K+1))) for n in self.nodes])
+            self.concern = [random.sample(loci, K+1) for n in self.nodes]
         for edge in edges_node_loc:
             node, loc = edge
             self.node_by_loc[loc].add(node)
