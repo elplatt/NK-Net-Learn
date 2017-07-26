@@ -114,7 +114,7 @@ def worker(task_queue, result_queue):
 num_workers = 12
 per_rewire = 100
 steps = 75
-Ns = [250, 500]
+Ns = [250]
 Ks = [4]
 Ds = [2]
 rs = [0.0, 0.33, 0.67, 1.0]
