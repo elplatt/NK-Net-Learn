@@ -256,6 +256,8 @@ class LocalIndividualConsensus(Strategy):
         for k, v in self.loc_by_node.iteritems():
             self.loc_by_node[k] = list(v)
         self.nodes = range(self.node_count)
+        # Use NK structure for choosing hill-climbing loci
+        self.concern = [self.loc_by_node[n] for n in self.nodes]        
     
     def get_next(self, states, values):
         best_states = []
@@ -265,38 +267,42 @@ class LocalIndividualConsensus(Strategy):
         K = self.model.K
         loci = range(N)
         # Hill climbing for connected subset of NK cells
-        trial_states = []
-        for n in range(self.node_count):
-            for loc in self.loc_by_node[n]:
-                new_state = list(state)
-                new_state[loc] = 1 - new_state[loc]
-                trial_states.append(new_state)
-        trial_values = self.model.get_values(trial_states)
+        trial_states, trial_values = self.model.get_hillclimb_values(states, self.concern)
         for n in range(self.node_count):
             next_state = list(state)
             next_value = state_value
-            for i in range(K+1):
-                new_value = trial_values[(K+1)*n + i]
+            for i in range(len(self.concern)):
+                trial_index = (len(self.concern))*n + i
+                new_value = trial_values[trial_index]
                 if new_value > next_value:
                     next_value = new_value
-                    next_state = trial_states[(K+1)*n + i]
+                    next_state = trial_states[trial_index]
             best_states.append(next_state)
         # Local (per-NK-cell) Consensus
         loc_total = [0] * self.model.N
         loc_count = [0] * self.model.N
+        sampled = 0
         for node, locs in self.loc_by_node.iteritems():
-            for l in locs:
+            if self.sample == 0 or len(locs) <= self.sample:
+                to_sample = locs
+            else:
+                sampled += 1
+                to_sample = random.sample(locs, self.sample)
+            for l in to_sample:
                 loc_count[l] += 1
                 loc_total[l] += best_states[node][l]
         next_state = list(state)
         # Majority vote
+        skipped = 0
         for l in range(self.model.N):
-            if float(loc_total[l]) / float(loc_count[l]) == 0.5:
+            if loc_count[l] == 0 or float(loc_total[l]) / float(loc_count[l]) == 0.5:
+                skipped += 1
                 continue
             if float(loc_total[l]) / float(loc_count[l]) > 0.5:
                 next_state[l] = 1
             else:
                 next_state[l] = 0
+        print "%d\t%d" % (sampled, skipped)
         next_value = self.model.get_value(next_state)
         return [next_state] * len(states), [next_value] * len(states)
         
