@@ -46,6 +46,7 @@ def simulate(N, K, D, rewire, steps=50, sample=3):
     loc_best_ind_strat = strategy.LocalConformityIndividual(model, edges_node_loc, sample)
     loc_conform_unstructured = strategy.LocalConformityIndividual(model, edges_node_loc, sample, False)
     loc_best_unstructured = strategy.LocalConformityIndividual(model, edges_node_loc, sample, False)
+    loc_cons = strategy.LocalIndividualConsensus(model, edges_node_loc, sample)
     # Simulate strategies
     sim = simulator.Simulator(model, edges, best_ind_strat)
     sim.run(steps)
@@ -77,6 +78,11 @@ def simulate(N, K, D, rewire, steps=50, sample=3):
     run_data["loc_best_unstruct_perf"] = sim.values[-1]
     run_data["loc_best_unstruct_eff"] = values_to_efficiency(sim.values)
     values["loc_best_unstruct"] = sim.values
+    sim = simulator.Simulator(model, edges, loc_cons)
+    sim.run(steps)
+    run_data["loc_cons_perf"] = sim.values[-1]
+    run_data["loc_cons_eff"] = values_to_efficiency(sim.values)
+    values["loc_cons"] = sim.values
     # Find diameter and mean path length
     next_diameter = 0
     total_path = 0
@@ -112,10 +118,10 @@ def worker(task_queue, result_queue):
 # In[ ]:
 
 num_workers = 12
-per_rewire = 100
-steps = 75
+per_rewire = 20
+steps = 200
 Ns = [250]
-Ks = [4]
+Ks = [7]
 Ds = [2]
 rs = [0.0, 0.33, 0.67, 1.0]
 samples = [3]
@@ -175,7 +181,8 @@ try:
         for k in [
                 "conform", "best",
                 "loc_conform", "loc_best",
-                "loc_conform_unstruct", "loc_best_unstruct"
+                "loc_conform_unstruct", "loc_best_unstruct",
+                "loc_cons"
         ]:
             for step, value in enumerate(values[k]):
                 d = [

@@ -51,13 +51,15 @@ class Individual(Strategy):
         trial_states, trial_values = self.model.get_hillclimb_values(states)
         current_values = values
         for n in self.nodes:
+            node_values = trial_values[n]
+            node_states = trial_states[n]
             next_value = current_values[n]
             next_node_state = states[n]
             for i in loci:
-                new_value = trial_values[n*N + i]
+                new_value = node_values[i]
                 if new_value > next_value:
                     next_value = new_value
-                    next_node_state = trial_states[n*N + i]
+                    next_node_state = node_states[i]
             new_states.append(next_node_state)
             new_values.append(next_value)
         return new_states, new_values
@@ -148,16 +150,9 @@ class LocalIndividual(Strategy):
         self.edges_node_loc = edges_node_loc
         self.node_count = max([n for n, l in edges_node_loc]) + 1
         self.nodes = range(self.node_count)
+        # Construct node->loc and loc-> node map
         self.node_by_loc = dict([(l, set()) for l in xrange(model.N)])
         self.loc_by_node = dict([(n, set()) for n in xrange(self.node_count)])
-        if structured:
-            # Use NK structure for choosing hill-climbing loci
-            self.concern = [self.loc_by_node[n] for n in self.nodes]
-        else:
-            # Randomly choose hill-climbing loci
-            loci = range(model.N)
-            K = model.K
-            self.concern = [random.sample(loci, K+1) for n in self.nodes]
         for edge in edges_node_loc:
             node, loc = edge
             self.node_by_loc[loc].add(node)
@@ -166,6 +161,15 @@ class LocalIndividual(Strategy):
             self.node_by_loc[k] = list(v)
         for k, v in self.loc_by_node.iteritems():
             self.loc_by_node[k] = list(v)
+        # Set concern loci for each node
+        if structured:
+            # Use NK structure for choosing hill-climbing loci
+            self.concern = [self.loc_by_node[n] for n in self.nodes]
+        else:
+            # Randomly choose hill-climbing loci
+            loci = range(model.N)
+            K = model.K
+            self.concern = [random.sample(loci, K+1) for n in self.nodes]
         
     def get_next(self, states, values):
         new_states = list(states)
@@ -178,10 +182,12 @@ class LocalIndividual(Strategy):
             current_value = values[n]
             next_state = states[n]
             next_value = current_value
-            for i in range(K+1):
-                new_value = trial_values[(K+1)*n + i]
+            node_values = trial_values[n]
+            node_states = trial_states[n]
+            for i in range(len(self.concern[n])):
+                new_value = node_values[i]
                 if new_value > next_value:
-                    next_state = trial_states[(K+1)*n + i]
+                    next_state = node_states[i]
                     next_value = new_value
             new_states[n] = next_state
             new_values[n] = next_value
@@ -245,6 +251,7 @@ class LocalIndividualConsensus(Strategy):
         self.model = model
         self.sample = sample
         self.node_count = max([n for n, l in edges_node_loc]) + 1
+        # Create node->loc and loc->node mapping
         self.node_by_loc = dict([(l, set()) for l in xrange(model.N)])
         self.loc_by_node = dict([(n, set()) for n in xrange(self.node_count)])
         for edge in edges_node_loc:
@@ -271,38 +278,34 @@ class LocalIndividualConsensus(Strategy):
         for n in range(self.node_count):
             next_state = list(state)
             next_value = state_value
-            for i in range(len(self.concern)):
-                trial_index = (len(self.concern))*n + i
-                new_value = trial_values[trial_index]
+            node_states = trial_states[n]
+            node_values = trial_values[n]
+            for i in range(len(self.concern[n])):
+                new_value = node_values[i]
                 if new_value > next_value:
                     next_value = new_value
-                    next_state = trial_states[trial_index]
+                    next_state = node_states[i]
             best_states.append(next_state)
         # Local (per-NK-cell) Consensus
         loc_total = [0] * self.model.N
         loc_count = [0] * self.model.N
-        sampled = 0
         for node, locs in self.loc_by_node.iteritems():
             if self.sample == 0 or len(locs) <= self.sample:
                 to_sample = locs
             else:
-                sampled += 1
                 to_sample = random.sample(locs, self.sample)
             for l in to_sample:
                 loc_count[l] += 1
                 loc_total[l] += best_states[node][l]
         next_state = list(state)
         # Majority vote
-        skipped = 0
         for l in range(self.model.N):
             if loc_count[l] == 0 or float(loc_total[l]) / float(loc_count[l]) == 0.5:
-                skipped += 1
                 continue
             if float(loc_total[l]) / float(loc_count[l]) > 0.5:
                 next_state[l] = 1
             else:
                 next_state[l] = 0
-        print "%d\t%d" % (sampled, skipped)
         next_value = self.model.get_value(next_state)
         return [next_state] * len(states), [next_value] * len(states)
         

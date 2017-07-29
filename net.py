@@ -11,26 +11,31 @@ def nk_to_affiliation(model, nodes_per_locus):
     # Construct affilation network connecting each node to a locus and its neighbors
     edges_node_loc = []
     node = 0
-    # Construct reverse map for NK dependence
-    rev_dependence = {}
-    for n in range(model.N):
-        for d in model.dependence[n]:
-            try:
-                rev_dependence[d].add(n)
-            except KeyError:
-                rev_dependence[d] = set([n])
+    reverse = False
+    if reverse:
+        # Construct reverse map for NK dependence
+        rev_dependence = {}
+        for n in range(model.N):
+            for d in model.dependence[n]:
+                try:
+                    rev_dependence[d].add(n)
+                except KeyError:
+                    rev_dependence[d] = set([n])
     # Add affiliation edges
     for n in range(model.N):
         for i in range(nodes_per_locus):
+            # Main NK locus
+            edges_node_loc.append( (node, n) )        
             # Follow forward NK edges
             for d in model.dependence[n]:
                 edges_node_loc.append( (node, d) )
-            # Follow reverse NK edges
-            try:
-                for d in rev_dependence[n]:
-                    edges_node_loc.append( (node, d) )
-            except KeyError:
-                pass
+            if reverse:
+                # Follow reverse NK edges
+                try:
+                    for d in rev_dependence[n]:
+                        edges_node_loc.append( (node, d) )
+                except KeyError:
+                    pass
             node += 1
     return edges_node_loc
 
@@ -53,20 +58,23 @@ def rewire_affiliation(model, edges_node_loc, rewire):
         edges_node_loc[t] = (target_node, source_loc)
 
 def affiliation_to_node(edges_node_loc):
-    # Construct node-node network
+    '''Construct node-node network from node-locus network.'''
+    # Create node->loc and loc-> node maps
     node_by_loc = {}
     loc_by_node = {}
     for edge in edges_node_loc:
         node, loc = edge
         try:
-            node_by_loc[loc].append(node)
+            node_by_loc[loc].add(node)
         except KeyError:
-            node_by_loc[loc] = [node]
+            node_by_loc[loc] = set([node])
         try:
-            loc_by_node[node].append(loc)
+            loc_by_node[node].add(loc)
         except KeyError:
-            loc_by_node[node] = [loc]
+            loc_by_node[node] = set([loc])
     edges_node = {}
+    # For a source node and its loci, create edges to/from other nodes
+    # dependent on those loci
     for source, loci in loc_by_node.iteritems():
         for loc in loci:
             for target in node_by_loc[loc]:
