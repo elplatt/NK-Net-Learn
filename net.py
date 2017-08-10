@@ -89,3 +89,9 @@ def affiliation_to_node(edges_node_loc):
                 except KeyError:
                     edges_node[target] = set([source])                   
     return edges_node
+
+def remove_edges(edges, p):
+    '''Remeve p percent of edges.'''
+    n = int(len(edges) * p)
+    new_edges = random.sample(edges, n)
+    return new_edges
