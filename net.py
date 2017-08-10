@@ -90,8 +90,15 @@ def affiliation_to_node(edges_node_loc):
                     edges_node[target] = set([source])                   
     return edges_node
 
-def remove_edges(edges, p):
-    '''Remeve p percent of edges.'''
-    n = int(len(edges) * p)
-    new_edges = random.sample(edges, n)
+def sample_edges(edges, p):
+    '''Keep fraction p of edges.'''
+    n = int(round(float(sum([len(v) for v in edges.values()]) * p)))
+    edge_pairs = sum([[(s,t) for t in edges[s]] for s in edges.keys()], [])
+    new_edge_pairs = random.sample(edge_pairs, n)
+    new_edges = {}
+    for s,t in new_edge_pairs:
+        try:
+            new_edges[s].add(t)
+        except KeyError:
+            new_edges[s] = set([t])
     return new_edges
