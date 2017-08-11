@@ -1,11 +1,13 @@
 
 # coding: utf-8
 
-# In[ ]:
+# In[7]:
+
 
 from multiprocessing import Process
 from multiprocessing import JoinableQueue as Queue
 from Queue import Empty
+import random
 import sys
 import time
 import numpy as np
@@ -19,7 +21,26 @@ import simulator
 import strategy
 
 
-# In[ ]:
+# In[8]:
+
+
+num_workers = 12
+per_rewire = 3
+steps = 200
+Ns = [250]
+Ks = [7]
+Ds = [2]
+rs = [0.0]
+keep = [float(x+1)/40.0 / in range(40)]
+samples = [3]
+
+uid = str(int(time.time()))
+
+exp = logbook.Experiment("nk_rewire")
+
+
+# In[9]:
+
 
 def values_to_efficiency(values):
     start = values[0]
@@ -27,11 +48,12 @@ def values_to_efficiency(values):
     return 1.0 / float(len([v for v in values if v <= halfmax]))
 
 
-# In[ ]:
+# In[10]:
 
-def simulate(N, K, D, rewire, steps=50, sample=3):
+
+def simulate(N, K, D, rewire, keep, steps=50, sample=3):
     start_time = time.time()
-    run_data = {"N": N, "K":K, "D":D, "rewire":rewire, "steps":steps, "sample":sample}
+    run_data = {"N": N, "K":K, "D":D, "rewire":rewire, "keep":keep, "steps":steps, "sample":sample}
     values = {}
     model = elpnk.NK(N, K)
     # Generate network from NK structure
@@ -39,6 +61,8 @@ def simulate(N, K, D, rewire, steps=50, sample=3):
     if rewire > 0:
         net.rewire_affiliation(model, edges_node_loc, rewire)
     edges = net.affiliation_to_node(edges_node_loc)
+    if keep < 1.0:
+        edges = net.sample_edges(edges, keep)
     # Create strategies
     best_ind_strat = strategy.BestNeighborIndividual(model, edges, sample)
     conform_ind_strat = strategy.ConformityIndividual(model, edges, sample)
@@ -103,32 +127,21 @@ def simulate(N, K, D, rewire, steps=50, sample=3):
     return (run_data, values)
 
 
-# In[ ]:
+# In[11]:
+
 
 def worker(task_queue, result_queue):
     try:
         while True:
-            N, K, D, r, steps, sample = task_queue.get_nowait()
-            result_queue.put(simulate(N, K, D, r, steps, sample))
+            N, K, D, r, k, steps, sample = task_queue.get_nowait()
+            result_queue.put(simulate(N, K, D, r, k, steps, sample))
             task_queue.task_done()
     except Empty:
         return
 
 
-# In[ ]:
+# In[12]:
 
-num_workers = 12
-per_rewire = 20
-steps = 200
-Ns = [250]
-Ks = [7]
-Ds = [2]
-rs = [0.0, 0.33, 0.67, 1.0]
-samples = [3]
-
-uid = str(int(time.time()))
-
-exp = logbook.Experiment("nk_rewire")
 
 task_queue = Queue()
 result_queue = Queue()
@@ -139,9 +152,10 @@ for i in range(per_rewire):
     for N in Ns:
         for K in Ks:
             for D in Ds:
-                for r in rs:
-                    for sample in samples:
-                            task_queue.put( (N, K, D, r, steps, sample) )
+                for sample in samples:
+                    for r in rs:
+                        for k in keep:
+                            task_queue.put( (N, K, D, r, k, steps,sample) )
                             total_tasks += 1
 workers = []
 for i in range(num_workers):
@@ -161,7 +175,7 @@ f_runs = open(exp.get_filename("runs.csv"), "wb")
 f_values = open(exp.get_filename("values.csv"), "wb")
 runs_written = 0
 values_written = 0
-values_columns = ["rewire", "strategy", "trial", "step", "value"]
+values_columns = ["rewire", "keep", "strategy", "trial", "step", "value"]
 
 tasks_complete = 0
 try:
@@ -188,6 +202,7 @@ try:
                 d = [
                     repr(values_written),
                     repr(run_data["rewire"]),
+                    repr(run_data["keep"]),
                     k,
                     run_id,
                     repr(step),
@@ -209,6 +224,13 @@ f_values.close()
 
 
 # In[ ]:
+
+
+
+
+
+# In[ ]:
+
 
 
 
