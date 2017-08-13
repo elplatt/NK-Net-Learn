@@ -1,6 +1,19 @@
 import random
 import net
 
+def edges_to_nodes(edges):
+    nodes = set()
+    for s, targets in edges:
+        nodes.add(s)
+        nodes += set(targets)
+    return nodes
+
+def edges_node_loc_to_nodes(edges_node_loc):
+    nodes = set()
+    for node, loc in edges_node_loc:
+        nodes.add(node)
+    return nodes
+
 class Strategy(object):
     
     def get_next(self, states, edges):
@@ -12,8 +25,8 @@ class BestNeighbor(Strategy):
         self.model = model
         self.edges = edges
         self.sample = sample
-        self.node_count = len(edges.keys())
-        self.nodes = range(self.node_count)
+        self.nodes = edges_to_nodes(edges)
+        self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
         new_states = list(states)
@@ -40,8 +53,8 @@ class Individual(Strategy):
     def __init__(self, model, edges):
         self.model = model
         self.edges = edges
-        self.node_count = len(edges.keys())
-        self.nodes = range(self.node_count)
+        self.nodes = edges_to_nodes(edges)
+        self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
         new_states = []
@@ -71,8 +84,8 @@ class BestNeighborIndividual(Strategy):
         self.edges = edges
         self.best = BestNeighbor(model, edges, sample)
         self.ind = Individual(model, edges)
-        self.node_count = len(edges.keys())
-        self.nodes = range(self.node_count)
+        self.nodes = edges_to_nodes(edges)
+        self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
         new_states = list(states)
@@ -96,8 +109,8 @@ class Conformity(Strategy):
         self.model = model
         self.edges = edges
         self.sample = sample
-        self.node_count = len(edges.keys())
-        self.nodes = range(self.node_count)
+        self.nodes = edges_to_nodes(edges)
+        self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
         new_states = []
@@ -126,8 +139,8 @@ class ConformityIndividual(Strategy):
         self.edges = edges
         self.conform = Conformity(model, edges, sample)
         self.ind = Individual(model, edges)
-        self.node_count = len(edges.keys())
-        self.nodes = range(self.node_count)
+        self.nodes = edges_to_nodes(edges)
+        self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
         new_states = []
@@ -148,11 +161,11 @@ class LocalIndividual(Strategy):
     def __init__(self, model, edges_node_loc, structured=True):
         self.model = model
         self.edges_node_loc = edges_node_loc
-        self.node_count = max([n for n, l in edges_node_loc]) + 1
-        self.nodes = range(self.node_count)
+        self.nodes = node_loc_to_nodes(edges_node_loc)
+        self.node_count = len(self.nodes)
         # Construct node->loc and loc-> node map
         self.node_by_loc = dict([(l, set()) for l in xrange(model.N)])
-        self.loc_by_node = dict([(n, set()) for n in xrange(self.node_count)])
+        self.loc_by_node = dict([(n, set()) for n in self.nodes])
         for edge in edges_node_loc:
             node, loc = edge
             self.node_by_loc[loc].add(node)
@@ -200,15 +213,15 @@ class LocalConformityIndividual(Strategy):
         self.edges = net.affiliation_to_node(edges_node_loc)
         self.conform = Conformity(model, self.edges, sample)
         self.loc_ind = LocalIndividual(model, edges_node_loc, structured)
-        self.node_count = len(self.edges.keys())
-        self.nodes = range(self.node_count)
+        self.nodes = edges_node_loc_to_nodes(edges_node_loc)
+        self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
         new_states = list(states)
         new_values = list(values)
         next_conform, conform_values = self.conform.get_next(states, values)
         next_ind, ind_values = self.loc_ind.get_next(states, values)
-        for n in range(self.node_count):
+        for n in range(self.nodes):
             value_conform = conform_values[n]
             value_ind = ind_values[n]
             if value_ind > value_conform:
@@ -226,15 +239,15 @@ class LocalBestNeighborIndividual(Strategy):
         self.edges = net.affiliation_to_node(edges_node_loc)
         self.best = BestNeighbor(model, self.edges, sample)
         self.loc_ind = LocalIndividual(model, edges_node_loc, structured)
-        self.node_count = len(self.edges.keys())
-        self.nodes = range(self.node_count)
+        self.nodes = edges_node_loc_to_nodes(edges_node_loc)
+        self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
         new_states = list(states)
         new_values = list(values)
         next_best, best_values = self.best.get_next(states, values)
         next_ind, ind_values = self.loc_ind.get_next(states, values)
-        for n in range(self.node_count):
+        for n in range(self.nodes):
             value_best = best_values[n]
             value_ind = ind_values[n]
             if value_ind > value_best:
@@ -250,10 +263,11 @@ class LocalIndividualConsensus(Strategy):
     def __init__(self, model, edges_node_loc, sample=0):
         self.model = model
         self.sample = sample
-        self.node_count = max([n for n, l in edges_node_loc]) + 1
+        self.nodes = edges_node_loc_to_nodes(edges_node_loc)
+        self.node_count = len(self.nodes)
         # Create node->loc and loc->node mapping
         self.node_by_loc = dict([(l, set()) for l in xrange(model.N)])
-        self.loc_by_node = dict([(n, set()) for n in xrange(self.node_count)])
+        self.loc_by_node = dict([(n, set()) for n in self.nodes])
         for edge in edges_node_loc:
             node, loc = edge
             self.node_by_loc[loc].add(node)
@@ -262,7 +276,6 @@ class LocalIndividualConsensus(Strategy):
             self.node_by_loc[k] = list(v)
         for k, v in self.loc_by_node.iteritems():
             self.loc_by_node[k] = list(v)
-        self.nodes = range(self.node_count)
         # Use NK structure for choosing hill-climbing loci
         self.concern = [self.loc_by_node[n] for n in self.nodes]        
     
@@ -275,7 +288,7 @@ class LocalIndividualConsensus(Strategy):
         loci = range(N)
         # Hill climbing for connected subset of NK cells
         trial_states, trial_values = self.model.get_hillclimb_values(states, self.concern)
-        for n in range(self.node_count):
+        for n in self.nodes:
             next_state = list(state)
             next_value = state_value
             node_states = trial_states[n]
