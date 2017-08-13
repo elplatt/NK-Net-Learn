@@ -3,9 +3,9 @@ import net
 
 def edges_to_nodes(edges):
     nodes = set()
-    for s, targets in edges:
+    for s, targets in edges.iteritems():
         nodes.add(s)
-        nodes += set(targets)
+        nodes = nodes | set(targets)
     return nodes
 
 def edges_node_loc_to_nodes(edges_node_loc):
@@ -161,7 +161,7 @@ class LocalIndividual(Strategy):
     def __init__(self, model, edges_node_loc, structured=True):
         self.model = model
         self.edges_node_loc = edges_node_loc
-        self.nodes = node_loc_to_nodes(edges_node_loc)
+        self.nodes = edges_node_loc_to_nodes(edges_node_loc)
         self.node_count = len(self.nodes)
         # Construct node->loc and loc-> node map
         self.node_by_loc = dict([(l, set()) for l in xrange(model.N)])
@@ -221,7 +221,7 @@ class LocalConformityIndividual(Strategy):
         new_values = list(values)
         next_conform, conform_values = self.conform.get_next(states, values)
         next_ind, ind_values = self.loc_ind.get_next(states, values)
-        for n in range(self.nodes):
+        for n in self.nodes:
             value_conform = conform_values[n]
             value_ind = ind_values[n]
             if value_ind > value_conform:
@@ -247,7 +247,7 @@ class LocalBestNeighborIndividual(Strategy):
         new_values = list(values)
         next_best, best_values = self.best.get_next(states, values)
         next_ind, ind_values = self.loc_ind.get_next(states, values)
-        for n in range(self.nodes):
+        for n in self.nodes:
             value_best = best_values[n]
             value_ind = ind_values[n]
             if value_ind > value_best:
