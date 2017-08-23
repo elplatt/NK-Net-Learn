@@ -3,7 +3,6 @@
 
 # In[7]:
 
-
 from multiprocessing import Process
 from multiprocessing import JoinableQueue as Queue
 from Queue import Empty
@@ -23,9 +22,8 @@ import strategy
 
 # In[8]:
 
-
 num_workers = 12
-per_rewire = 3
+per_rewire = 15
 steps = 200
 Ns = [250]
 Ks = [7]
@@ -41,7 +39,6 @@ exp = logbook.Experiment("nk_rewire")
 
 # In[9]:
 
-
 def values_to_efficiency(values):
     start = values[0]
     halfmax = (max(values) - start) / 2.0 + start
@@ -49,7 +46,6 @@ def values_to_efficiency(values):
 
 
 # In[10]:
-
 
 def simulate(N, K, D, rewire, keep, steps=50, sample=3):
     start_time = time.time()
@@ -129,7 +125,6 @@ def simulate(N, K, D, rewire, keep, steps=50, sample=3):
 
 # In[11]:
 
-
 def worker(task_queue, result_queue):
     try:
         while True:
@@ -141,7 +136,6 @@ def worker(task_queue, result_queue):
 
 
 # In[12]:
-
 
 task_queue = Queue()
 result_queue = Queue()
@@ -228,9 +222,7 @@ f_values.close()
 
 
 
-
 # In[ ]:
-
 
 
 
