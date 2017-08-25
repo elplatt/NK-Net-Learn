@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[7]:
+# In[ ]:
 
 from multiprocessing import Process
 from multiprocessing import JoinableQueue as Queue
@@ -20,7 +20,7 @@ import simulator
 import strategy
 
 
-# In[8]:
+# In[ ]:
 
 num_workers = 12
 per_rewire = 15
@@ -29,7 +29,7 @@ Ns = [250]
 Ks = [7]
 Ds = [2]
 rs = [0.0]
-keep = [float(x+1)/40.0 / in range(40)]
+keep = [float(x+1)/40.0 for x in range(40)]
 samples = [3]
 
 uid = str(int(time.time()))
@@ -37,7 +37,7 @@ uid = str(int(time.time()))
 exp = logbook.Experiment("nk_rewire")
 
 
-# In[9]:
+# In[ ]:
 
 def values_to_efficiency(values):
     start = values[0]
@@ -45,7 +45,7 @@ def values_to_efficiency(values):
     return 1.0 / float(len([v for v in values if v <= halfmax]))
 
 
-# In[10]:
+# In[ ]:
 
 def simulate(N, K, D, rewire, keep, steps=50, sample=3):
     start_time = time.time()
@@ -123,7 +123,7 @@ def simulate(N, K, D, rewire, keep, steps=50, sample=3):
     return (run_data, values)
 
 
-# In[11]:
+# In[ ]:
 
 def worker(task_queue, result_queue):
     try:
@@ -133,9 +133,11 @@ def worker(task_queue, result_queue):
             task_queue.task_done()
     except Empty:
         return
+    except IndexError:
+        print N, K, D, r, k, steps, sample
 
 
-# In[12]:
+# In[ ]:
 
 task_queue = Queue()
 result_queue = Queue()

@@ -40,7 +40,13 @@ class BestNeighbor(Strategy):
             else:
                 to_sample = random.sample(self.edges[n], self.sample)
             for neighbor in to_sample:
-                new_value = self.model.get_value(states[neighbor])
+                try:
+                    new_value = self.model.get_value(states[neighbor])
+                except IndexError:
+                    print states.keys()
+                    print to_sample
+                    print neighbor
+                    raise
                 if new_value > next_value:
                     next_value = new_value
                     next_node_state = states[neighbor]
