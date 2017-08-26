@@ -43,7 +43,7 @@ class BestNeighbor(Strategy):
                 try:
                     new_value = self.model.get_value(states[neighbor])
                 except IndexError:
-                    print states.keys()
+                    print len(states)
                     print to_sample
                     print neighbor
                     raise

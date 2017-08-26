@@ -97,6 +97,8 @@ def sample_edges(edges, p):
     new_edge_pairs = random.sample(edge_pairs, n)
     new_edges = {}
     for s,t in new_edge_pairs:
+        if t not in new_edges:
+            new_edges[t] = set([])
         try:
             new_edges[s].add(t)
         except KeyError:
