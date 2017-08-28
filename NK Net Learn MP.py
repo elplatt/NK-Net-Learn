@@ -134,12 +134,15 @@ def worker(task_queue, result_queue):
     try:
         while True:
             N, K, D, r, k, steps, sample = task_queue.get_nowait()
-            result_queue.put(simulate(N, K, D, r, k, steps, sample))
+            try:
+                result_queue.put(simulate(N, K, D, r, k, steps, sample))
+            except IndexError:
+                print N, K, D, r, k, steps, sample
+            except KeyError:
+                print N, K, D, r, k, steps, sample
             task_queue.task_done()
     except Empty:
         return
-    except IndexError:
-        print N, K, D, r, k, steps, sample
 
 
 # In[ ]:
