@@ -131,9 +131,12 @@ class Conformity(Strategy):
                     state_counts[tuple(states[neighbor])] += 1
                 except KeyError:
                     state_counts[tuple(states[neighbor])] = 1
-            max_counts = max([x[1] or [0] for x in state_counts.iteritems()])
-            max_states = [list(x[0]) for x in state_counts.iteritems() if x[1] == max_counts]
-            next_node_state = random.choice(max_states)
+            if len(to_sample) == 0:
+                next_node_state = states[n]
+            else:
+                max_counts = max([x[1] for x in state_counts.iteritems()])
+                max_states = [list(x[0]) for x in state_counts.iteritems() if x[1] == max_counts]
+                next_node_state = random.choice(max_states)
             new_states.append(next_node_state)
         new_values = self.model.get_values(new_states)
         return new_states, new_values
