@@ -6,7 +6,7 @@ class Simulator(object):
     def __init__(self, model, edges, strat=None):
         self.model = model
         self.edges = edges
-        self.nodes = sorted(edges.keys())
+        self.nodes = sorted(set(edges.keys()) | set(edges.values()))
         self.node_count = len(self.nodes)
         self.values = []
         if strat is None:
@@ -24,6 +24,7 @@ class Simulator(object):
             self.values.append(sum(next_values) / float(len(self.nodes)))
             
     def init_state(self):
-        self.states = [
-            [random.getrandbits(1) for i in range(self.model.N)]
-            for j in range(self.node_count)]
+        self.states = dict([
+            (j, 
+            [random.getrandbits(1) for i in range(self.model.N)])
+            for j in self.nodes])
