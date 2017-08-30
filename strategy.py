@@ -29,8 +29,8 @@ class BestNeighbor(Strategy):
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
-        new_states = list(states)
-        new_values = list(values)
+        new_states = dict(states)
+        new_values = dict(values)
         for n in self.nodes:
             current_value = values[n]
             next_node_state = states[n]
@@ -63,8 +63,8 @@ class Individual(Strategy):
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
-        new_states = []
-        new_values = []
+        new_states = {}
+        new_values = {}
         N = self.model.N
         loci = range(N)
         trial_states, trial_values = self.model.get_hillclimb_values(states)
@@ -79,8 +79,8 @@ class Individual(Strategy):
                 if new_value > next_value:
                     next_value = new_value
                     next_node_state = node_states[i]
-            new_states.append(next_node_state)
-            new_values.append(next_value)
+            new_states[n] = next_node_state
+            new_values[n] = next_value
         return new_states, new_values
 
 class BestNeighborIndividual(Strategy):
@@ -94,8 +94,8 @@ class BestNeighborIndividual(Strategy):
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
-        new_states = list(states)
-        new_values = list(values)
+        new_states = dict(states)
+        new_values = dict(values)
         next_best, best_values = self.best.get_next(states, values)
         next_ind, ind_values = self.ind.get_next(states, values)
         for n in self.nodes:
@@ -119,7 +119,7 @@ class Conformity(Strategy):
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
-        new_states = []
+        new_states = {}
         for n in self.nodes:
             state_counts = {}
             if self.sample == 0 or len(self.edges[n]) <= self.sample:
@@ -137,7 +137,7 @@ class Conformity(Strategy):
                 max_counts = max([x[1] for x in state_counts.iteritems()])
                 max_states = [list(x[0]) for x in state_counts.iteritems() if x[1] == max_counts]
                 next_node_state = random.choice(max_states)
-            new_states.append(next_node_state)
+            new_states[n] = next_node_state
         new_values = self.model.get_values(new_states)
         return new_states, new_values
 
@@ -152,17 +152,17 @@ class ConformityIndividual(Strategy):
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
-        new_states = []
-        new_values = []
+        new_states = {}
+        new_values = {}
         next_conform, next_conform_values = self.conform.get_next(states, values)
         next_ind, next_ind_values = self.ind.get_next(states, values)
         for n in self.nodes:
             if next_ind_values[n] > next_conform_values[n]:
-                new_states.append(next_ind[n])
-                new_values.append(next_ind_values[n])
+                new_states[n] = next_ind[n]
+                new_values[n] = next_ind_values[n]
             else:
-                new_states.append(next_conform[n])
-                new_values.append(next_conform_values[n])
+                new_states[n] = next_conform[n]
+                new_values[n] = next_conform_values[n]
         return new_states, new_values
 
 class LocalIndividual(Strategy):
@@ -194,8 +194,8 @@ class LocalIndividual(Strategy):
             self.concern = [random.sample(loci, K+1) for n in self.nodes]
         
     def get_next(self, states, values):
-        new_states = list(states)
-        new_values = list(values)
+        new_states = dict(states)
+        new_values = dict(values)
         N = self.model.N
         K = self.model.K
         loci = range(N)
@@ -226,8 +226,8 @@ class LocalConformityIndividual(Strategy):
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
-        new_states = list(states)
-        new_values = list(values)
+        new_states = dict(states)
+        new_values = dict(values)
         next_conform, conform_values = self.conform.get_next(states, values)
         next_ind, ind_values = self.loc_ind.get_next(states, values)
         for n in self.nodes:
@@ -252,8 +252,8 @@ class LocalBestNeighborIndividual(Strategy):
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
-        new_states = list(states)
-        new_values = list(values)
+        new_states = dict(states)
+        new_values = dict(values)
         next_best, best_values = self.best.get_next(states, values)
         next_ind, ind_values = self.loc_ind.get_next(states, values)
         for n in self.nodes:
@@ -289,12 +289,13 @@ class LocalIndividualConsensus(Strategy):
         self.concern = [self.loc_by_node[n] for n in self.nodes]        
     
     def get_next(self, states, values):
-        best_states = []
-        state = states[0]
-        state_value = values[0]
+        state = states.values()[0]
+        state_value = values.values()[0]
         N = self.model.N
         K = self.model.K
         loci = range(N)
+        # Each node's private preferred state after individual learning
+        best_states = {}
         # Hill climbing for connected subset of NK cells
         trial_states, trial_values = self.model.get_hillclimb_values(states, self.concern)
         for n in self.nodes:
@@ -307,7 +308,7 @@ class LocalIndividualConsensus(Strategy):
                 if new_value > next_value:
                     next_value = new_value
                     next_state = node_states[i]
-            best_states.append(next_state)
+            best_states[n] = next_state
         # Local (per-NK-cell) Consensus
         loc_total = [0] * self.model.N
         loc_count = [0] * self.model.N
@@ -329,5 +330,5 @@ class LocalIndividualConsensus(Strategy):
             else:
                 next_state[l] = 0
         next_value = self.model.get_value(next_state)
-        return [next_state] * len(states), [next_value] * len(states)
+        return dict([(n, next_state) for n in self.nodes], dict([(n, next_value) for n in self.nodes])
         
