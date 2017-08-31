@@ -6,7 +6,7 @@ class Simulator(object):
     def __init__(self, model, edges, strat=None):
         self.model = model
         self.edges = edges
-        self.nodes = sorted(set(edges.keys()) | set(edges.values()))
+        self.nodes = sorted(set(edges.keys()) | set(sum([list(x) for x in edges.values()], [])))
         self.node_count = len(self.nodes)
         self.values = []
         if strat is None:

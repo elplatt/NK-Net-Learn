@@ -330,5 +330,5 @@ class LocalIndividualConsensus(Strategy):
             else:
                 next_state[l] = 0
         next_value = self.model.get_value(next_state)
-        return dict([(n, next_state) for n in self.nodes], dict([(n, next_value) for n in self.nodes])
+        return dict([(n, next_state) for n in self.nodes]), dict([(n, next_value) for n in self.nodes])
         
