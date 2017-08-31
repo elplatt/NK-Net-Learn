@@ -186,12 +186,12 @@ class LocalIndividual(Strategy):
         # Set concern loci for each node
         if structured:
             # Use NK structure for choosing hill-climbing loci
-            self.concern = [self.loc_by_node[n] for n in self.nodes]
+            self.concern = dict([(n, self.loc_by_node[n]) for n in self.nodes])
         else:
             # Randomly choose hill-climbing loci
             loci = range(model.N)
             K = model.K
-            self.concern = [random.sample(loci, K+1) for n in self.nodes]
+            self.concern = dict([(n, random.sample(loci, K+1)) for n in self.nodes])
         
     def get_next(self, states, values):
         new_states = dict(states)
