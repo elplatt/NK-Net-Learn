@@ -35,10 +35,14 @@ class BestNeighbor(Strategy):
             current_value = values[n]
             next_node_state = states[n]
             next_value = current_value
-            if self.sample == 0 or len(self.edges[n]) <= self.sample:
-                to_sample = self.edges[n]
-            else:
-                to_sample = random.sample(self.edges[n], self.sample)
+            try:
+                neighbors = self.edges[n]
+                if self.sample == 0 or len(neighbors) <= self.sample:
+                    to_sample = neighbors
+                else:
+                    to_sample = random.sample(neighbors, self.sample)
+            except KeyError:
+                to_sample = []
             for neighbor in to_sample:
                 try:
                     new_value = self.model.get_value(states[neighbor])
@@ -119,10 +123,14 @@ class Conformity(Strategy):
         new_states = {}
         for n in self.nodes:
             state_counts = {}
-            if self.sample == 0 or len(self.edges[n]) <= self.sample:
-                to_sample = self.edges[n]
-            else:
-                to_sample = random.sample(self.edges[n], self.sample)
+            try:
+                neighbors = self.edges[n]
+                if self.sample == 0 or len(neighbors) <= self.sample:
+                    to_sample = neighbors
+                else:
+                    to_sample = random.sample(neighbors, self.sample)
+            except KeyError:
+                to_sample = []
             for neighbor in to_sample:
                 neighbor_state = states[neighbor]
                 try:
@@ -311,10 +319,13 @@ class LocalIndividualConsensus(Strategy):
         loc_total = [0] * self.model.N
         loc_count = [0] * self.model.N
         for node, locs in self.loc_by_node.iteritems():
-            if self.sample == 0 or len(locs) <= self.sample:
-                to_sample = locs
-            else:
-                to_sample = random.sample(locs, self.sample)
+            try:
+                if self.sample == 0 or len(locs) <= self.sample:
+                    to_sample = locs
+                else:
+                    to_sample = random.sample(locs, self.sample)
+            except KeyError:
+                to_sample = []
             for l in to_sample:
                 loc_count[l] += 1
                 loc_total[l] += best_states[node][l]
