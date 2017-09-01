@@ -12,6 +12,7 @@ def nk_to_affiliation(model, nodes_per_locus):
     edges_node_loc = []
     node = 0
     reverse = False
+    nodes = []
     if reverse:
         # Construct reverse map for NK dependence
         rev_dependence = {}
@@ -36,8 +37,9 @@ def nk_to_affiliation(model, nodes_per_locus):
                         edges_node_loc.append( (node, d) )
                 except KeyError:
                     pass
+            nodes.append(node)
             node += 1
-    return edges_node_loc
+    return edges_node_loc, nodes
 
 def rewire_affiliation(model, edges_node_loc, rewire):
     # Rewire the node-locus affiliation network        

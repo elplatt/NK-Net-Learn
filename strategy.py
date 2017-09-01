@@ -21,11 +21,11 @@ class Strategy(object):
 
 class BestNeighbor(Strategy):
     
-    def __init__(self, model, edges, sample=0):
+    def __init__(self, model, nodes, edges, sample=0):
         self.model = model
         self.edges = edges
         self.sample = sample
-        self.nodes = edges_to_nodes(edges)
+        self.nodes = nodes
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
@@ -43,9 +43,6 @@ class BestNeighbor(Strategy):
                 try:
                     new_value = self.model.get_value(states[neighbor])
                 except IndexError:
-                    print len(states)
-                    print to_sample
-                    print neighbor
                     raise
                 if new_value > next_value:
                     next_value = new_value
@@ -56,10 +53,10 @@ class BestNeighbor(Strategy):
 
 class Individual(Strategy):
     
-    def __init__(self, model, edges):
+    def __init__(self, model, nodes, edges):
         self.model = model
         self.edges = edges
-        self.nodes = edges_to_nodes(edges)
+        self.nodes = nodes
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
@@ -85,12 +82,12 @@ class Individual(Strategy):
 
 class BestNeighborIndividual(Strategy):
     
-    def __init__(self, model, edges, sample=0):
+    def __init__(self, model, nodes, edges, sample=0):
         self.model = model
         self.edges = edges
-        self.best = BestNeighbor(model, edges, sample)
-        self.ind = Individual(model, edges)
-        self.nodes = edges_to_nodes(edges)
+        self.best = BestNeighbor(model, nodes, edges, sample)
+        self.ind = Individual(model, nodes, edges)
+        self.nodes = nodes
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
@@ -111,11 +108,11 @@ class BestNeighborIndividual(Strategy):
 
 class Conformity(Strategy):
     
-    def __init__(self, model, edges, sample=0):
+    def __init__(self, model, nodes, edges, sample=0):
         self.model = model
         self.edges = edges
         self.sample = sample
-        self.nodes = edges_to_nodes(edges)
+        self.nodes = nodes
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
@@ -127,10 +124,11 @@ class Conformity(Strategy):
             else:
                 to_sample = random.sample(self.edges[n], self.sample)
             for neighbor in to_sample:
+                neighbor_state = states[neighbor]
                 try:
-                    state_counts[tuple(states[neighbor])] += 1
+                    state_counts[tuple(neighbor_state)] += 1
                 except KeyError:
-                    state_counts[tuple(states[neighbor])] = 1
+                    state_counts[tuple(neighbor_state)] = 1
             if len(to_sample) == 0:
                 next_node_state = states[n]
             else:
@@ -143,12 +141,12 @@ class Conformity(Strategy):
 
 class ConformityIndividual(Strategy):
     
-    def __init__(self, model, edges, sample=0):
+    def __init__(self, model, nodes, edges, sample=0):
         self.model = model
         self.edges = edges
-        self.conform = Conformity(model, edges, sample)
-        self.ind = Individual(model, edges)
-        self.nodes = edges_to_nodes(edges)
+        self.conform = Conformity(model, nodes, edges, sample)
+        self.ind = Individual(model, nodes, edges)
+        self.nodes = nodes
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
@@ -167,10 +165,10 @@ class ConformityIndividual(Strategy):
 
 class LocalIndividual(Strategy):
     
-    def __init__(self, model, edges_node_loc, structured=True):
+    def __init__(self, model, nodes, edges_node_loc, structured=True):
         self.model = model
         self.edges_node_loc = edges_node_loc
-        self.nodes = edges_node_loc_to_nodes(edges_node_loc)
+        self.nodes = nodes
         self.node_count = len(self.nodes)
         # Construct node->loc and loc-> node map
         self.node_by_loc = dict([(l, set()) for l in xrange(model.N)])
@@ -217,12 +215,12 @@ class LocalIndividual(Strategy):
 
 class LocalConformityIndividual(Strategy):
     
-    def __init__(self, model, edges_node_loc, sample=0, structured=True):
+    def __init__(self, model, nodes, edges_node_loc, sample=0, structured=True):
         self.model = model
         self.edges = net.affiliation_to_node(edges_node_loc)
-        self.conform = Conformity(model, self.edges, sample)
-        self.loc_ind = LocalIndividual(model, edges_node_loc, structured)
-        self.nodes = edges_node_loc_to_nodes(edges_node_loc)
+        self.conform = Conformity(model, nodes, self.edges, sample)
+        self.loc_ind = LocalIndividual(model, nodes, edges_node_loc, structured)
+        self.nodes = nodes
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
@@ -243,12 +241,12 @@ class LocalConformityIndividual(Strategy):
 
 class LocalBestNeighborIndividual(Strategy):
     
-    def __init__(self, model, edges_node_loc, sample=0, structured=True):
+    def __init__(self, model, nodes, edges_node_loc, sample=0, structured=True):
         self.model = model
         self.edges = net.affiliation_to_node(edges_node_loc)
-        self.best = BestNeighbor(model, self.edges, sample)
-        self.loc_ind = LocalIndividual(model, edges_node_loc, structured)
-        self.nodes = edges_node_loc_to_nodes(edges_node_loc)
+        self.best = BestNeighbor(model, nodes, self.edges, sample)
+        self.loc_ind = LocalIndividual(model, nodes, edges_node_loc, structured)
+        self.nodes = nodes
         self.node_count = len(self.nodes)
         
     def get_next(self, states, values):
@@ -269,10 +267,10 @@ class LocalBestNeighborIndividual(Strategy):
 
 class LocalIndividualConsensus(Strategy):
     
-    def __init__(self, model, edges_node_loc, sample=0):
+    def __init__(self, model, nodes, edges_node_loc, sample=0):
         self.model = model
         self.sample = sample
-        self.nodes = edges_node_loc_to_nodes(edges_node_loc)
+        self.nodes = nodes
         self.node_count = len(self.nodes)
         # Create node->loc and loc->node mapping
         self.node_by_loc = dict([(l, set()) for l in xrange(model.N)])

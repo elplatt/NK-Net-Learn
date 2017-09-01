@@ -3,10 +3,10 @@ import strategy
 
 class Simulator(object):
     
-    def __init__(self, model, edges, strat=None):
+    def __init__(self, model, nodes, edges, strat=None):
         self.model = model
         self.edges = edges
-        self.nodes = sorted(set(edges.keys()) | set(sum([list(x) for x in edges.values()], [])))
+        self.nodes = nodes
         self.node_count = len(self.nodes)
         self.values = []
         if strat is None:
