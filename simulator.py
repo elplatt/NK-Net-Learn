@@ -17,11 +17,11 @@ class Simulator(object):
     def run(self, steps):
         self.init_state()
         next_values = self.model.get_values(self.states)
-        self.values.append(sum(next_values) / float(len(self.nodes)))
+        self.values.append(sum(next_values.values()) / float(len(self.nodes)))
         for i in range(steps):
             next_states, next_values = self.strategy.get_next(self.states, next_values)
             self.states = next_states
-            self.values.append(sum(next_values) / float(len(self.nodes)))
+            self.values.append(sum(next_values.values()) / float(len(self.nodes)))
             
     def init_state(self):
         self.states = dict([
