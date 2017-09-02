@@ -11,8 +11,8 @@ def nk_to_affiliation(model, nodes_per_locus):
     # Construct affilation network connecting each node to a locus and its neighbors
     edges_node_loc = []
     node = 0
-    reverse = False
     nodes = []
+    reverse = False
     if reverse:
         # Construct reverse map for NK dependence
         rev_dependence = {}
@@ -25,9 +25,7 @@ def nk_to_affiliation(model, nodes_per_locus):
     # Add affiliation edges
     for n in range(model.N):
         for i in range(nodes_per_locus):
-            # Main NK locus
-            edges_node_loc.append( (node, n) )        
-            # Follow forward NK edges
+            # Follow forward NK edges (including self-dependence)
             for d in model.dependence[n]:
                 edges_node_loc.append( (node, d) )
             if reverse:
