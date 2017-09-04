@@ -25,18 +25,18 @@ import strategy
 
 
 num_workers = 12
-per_rewire = 15
+per_rewire = 1
 steps = 300
 Ns = [250]
 Ks = [7]
 Ds = [2]
 rs = [0.0]
-keep = [float(x+1)/40.0 for x in range(10)]
+keep = [float(x+1)/12.0 for x in range(12)]
 samples = [3]
 
 uid = str(int(time.time()))
 
-exp = logbook.Experiment("nk_rewire_debug")
+exp = logbook.Experiment("nk_delete")
 
 
 # In[ ]:
@@ -57,56 +57,65 @@ def simulate(N, K, D, rewire, keep, steps=50, sample=3):
     values = {}
     model = elpnk.NK(N, K)
     # Generate network from NK structure
-    edges_node_loc = net.nk_to_affiliation(model, D)
+    edges_node_loc, nodes = net.nk_to_affiliation(model, D)
     if rewire > 0:
         net.rewire_affiliation(model, edges_node_loc, rewire)
     edges = net.affiliation_to_node(edges_node_loc)
     if keep < 1.0:
         edges = net.sample_edges(edges, keep)
+        
     # Create strategies
-    best_ind_strat = strategy.BestNeighborIndividual(model, edges, sample)
-    conform_ind_strat = strategy.ConformityIndividual(model, edges, sample)
-    loc_conform_ind_strat = strategy.LocalConformityIndividual(model, edges_node_loc, sample)
-    loc_best_ind_strat = strategy.LocalConformityIndividual(model, edges_node_loc, sample)
-    loc_conform_unstructured = strategy.LocalConformityIndividual(model, edges_node_loc, sample, False)
-    loc_best_unstructured = strategy.LocalConformityIndividual(model, edges_node_loc, sample, False)
-    loc_cons = strategy.LocalIndividualConsensus(model, edges_node_loc, sample)
+    best_ind_strat = strategy.BestNeighborIndividual(model, nodes, edges, sample)
+    conform_ind_strat = strategy.ConformityIndividual(model, nodes, edges, sample)
+    loc_conform_ind_strat = strategy.LocalConformityIndividual(model, nodes, edges_node_loc, sample)
+    loc_best_ind_strat = strategy.LocalBestNeighborIndividual(model, nodes, edges_node_loc, sample)
+    #loc_conform_unstructured = strategy.LocalConformityIndividual(model, nodes, edges_node_loc, sample, False)
+    #loc_best_unstructured = strategy.LocalBestNeighborIndividual(model, nodes, edges_node_loc, sample, False)
+    loc_cons = strategy.LocalIndividualConsensus(model, nodes, edges_node_loc, sample)
+    
     # Simulate strategies
-    sim = simulator.Simulator(model, edges, best_ind_strat)
+    sim = simulator.Simulator(model, nodes, edges, best_ind_strat)
     sim.run(steps)
     run_data["best_perf"] = sim.values[-1]
     run_data["best_eff"] = values_to_efficiency(sim.values)
     values["best"] = sim.values
-    sim = simulator.Simulator(model, edges, conform_ind_strat)
+    
+    sim = simulator.Simulator(model, nodes, edges, conform_ind_strat)
     sim.run(steps)
     run_data["conform_perf"] = sim.values[-1]
     run_data["conform_eff"] = values_to_efficiency(sim.values)
     values["conform"] = sim.values
-    sim = simulator.Simulator(model, edges, loc_conform_ind_strat)
+    
+    sim = simulator.Simulator(model, nodes, edges, loc_conform_ind_strat)
     sim.run(steps)
     run_data["loc_conform_perf"] = sim.values[-1]
     run_data["loc_conform_eff"] = values_to_efficiency(sim.values)
     values["loc_conform"] = sim.values
-    sim = simulator.Simulator(model, edges, loc_best_ind_strat)
+    
+    sim = simulator.Simulator(model, nodes, edges, loc_best_ind_strat)
     sim.run(steps)
     run_data["loc_best_perf"] = sim.values[-1]
     run_data["loc_best_eff"] = values_to_efficiency(sim.values)
     values["loc_best"] = sim.values
-    sim = simulator.Simulator(model, edges, loc_conform_unstructured)
-    sim.run(steps)
-    run_data["loc_conform_unstruct_perf"] = sim.values[-1]
-    run_data["loc_conform_unstruct_eff"] = values_to_efficiency(sim.values)
-    values["loc_conform_unstruct"] = sim.values
-    sim = simulator.Simulator(model, edges, loc_best_unstructured)
-    sim.run(steps)
-    run_data["loc_best_unstruct_perf"] = sim.values[-1]
-    run_data["loc_best_unstruct_eff"] = values_to_efficiency(sim.values)
-    values["loc_best_unstruct"] = sim.values
-    sim = simulator.Simulator(model, edges, loc_cons)
+    
+    #sim = simulator.Simulator(model, nodes, edges, loc_conform_unstructured)
+    #sim.run(steps)
+    #run_data["loc_conform_unstruct_perf"] = sim.values[-1]
+    #run_data["loc_conform_unstruct_eff"] = values_to_efficiency(sim.values)
+    #values["loc_conform_unstruct"] = sim.values
+    
+    #sim = simulator.Simulator(model, nodes, edges, loc_best_unstructured)
+    #sim.run(steps)
+    #run_data["loc_best_unstruct_perf"] = sim.values[-1]
+    #run_data["loc_best_unstruct_eff"] = values_to_efficiency(sim.values)
+    #values["loc_best_unstruct"] = sim.values
+    
+    sim = simulator.Simulator(model, nodes, edges, loc_cons)
     sim.run(steps)
     run_data["loc_cons_perf"] = sim.values[-1]
     run_data["loc_cons_eff"] = values_to_efficiency(sim.values)
     values["loc_cons"] = sim.values
+    
     # Find diameter and mean path length
     next_diameter = 0
     total_path = 0
@@ -160,13 +169,17 @@ for i in range(per_rewire):
                 for sample in samples:
                     for r in rs:
                         for k in keep:
-                            task_queue.put( (N, K, D, r, k, steps,sample) )
+                            if num_workers > 1:
+                                task_queue.put( (N, K, D, r, k, steps,sample) )
+                            else:
+                                result_queue.put(simulate(N, K, D, r, k, steps,sample))
                             total_tasks += 1
-workers = []
-for i in range(num_workers):
-    p = Process(target=worker, args=(task_queue, result_queue))
-    workers.append(p)
-    p.start()
+if num_workers > 1:
+    workers = []
+    for i in range(num_workers):
+        p = Process(target=worker, args=(task_queue, result_queue))
+        workers.append(p)
+        p.start()
 
 conform_values = {}
 best_values = {}
@@ -231,7 +244,7 @@ f_values.close()
 # In[ ]:
 
 
-
+exp.get_filename("")
 
 
 # In[ ]:
