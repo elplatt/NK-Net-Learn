@@ -5,6 +5,7 @@
 
 from multiprocessing import Process
 from multiprocessing import JoinableQueue as Queue
+import os
 from Queue import Empty
 import random
 import sys
@@ -23,15 +24,15 @@ import strategy
 
 # In[ ]:
 
-num_workers = 1
+num_workers = 12
 per_rewire = 1
 steps = 300
 Ns = [250]
 Ks = [7]
 Ds = [2]
 rs = [0.0]
-keep = [0.75]
-samples = [0]
+keep = [float(k+1) / 8.0 for k in range(8)]
+samples = [3]
 
 methods = [
     "conform", "best",
@@ -42,7 +43,10 @@ methods = [
 
 uid = str(int(time.time()))
 
-exp = logbook.Experiment("nk_delete")
+exp_name = "nk_delete"
+if os.environ["PBS_ARRAYID"]:
+    exp_name = exp_name + " " + os.environ["PBS_ARRAYID"]
+exp = logbook.Experiment(exp_name)
 
 
 # In[ ]:
@@ -173,6 +177,8 @@ def worker(task_queue, result_queue):
 
 # In[ ]:
 
+start_time = time.time()
+
 task_queue = Queue()
 result_queue = Queue()
 
@@ -254,10 +260,7 @@ while tasks_complete < total_tasks:
 f_runs.close()
 f_values.close()
 
-
-# In[ ]:
-
-exp.get_filename("")
+print "Completed in %s seconds" % repr(time.time() - start_time)
 
 
 # In[ ]:
