@@ -245,7 +245,7 @@ while tasks_complete < total_tasks:
         f_runs.flush()
         f_values.flush()
         runs_written += 1
-    tasks_complete += 1
+        tasks_complete += 1
     except Empty:
         break
     except:
