@@ -31,7 +31,7 @@ Ns = [250]
 Ks = [7]
 Ds = [2]
 rs = [0.0]
-keep = [float(k+1) / 8.0 for k in range(8)]
+keep = [float(k+1) / 12.0 for k in range(8)]
 samples = [3]
 
 methods = [
