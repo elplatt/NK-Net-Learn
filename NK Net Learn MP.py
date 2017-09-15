@@ -24,15 +24,15 @@ import strategy
 
 # In[ ]:
 
-num_workers = 12
-per_rewire = 1
-steps = 300
+num_workers = 1
+per_rewire = 25
+steps = 10
 Ns = [250]
 Ks = [7]
 Ds = [2]
-rs = [0.0]
-keep = [float(k+1) / 12.0 for k in range(8)]
-samples = [3]
+rs = [float(x) / 6.0 for x in range(7)]
+keep = [1.0]
+samples = [0]
 
 methods = [
     "conform", "best",
@@ -43,10 +43,13 @@ methods = [
 
 uid = str(int(time.time()))
 
-exp_name = "nk_delete"
-if os.environ["PBS_ARRAYID"]:
-    exp_name = exp_name + " " + os.environ["PBS_ARRAYID"]
-exp = logbook.Experiment(exp_name)
+exp_name = "nk_rewire"
+try:
+    job_id = os.environ["PBS_ARRAYID"]
+    exp_name = exp_name
+except KeyError:
+    job_id = 0
+exp = logbook.Experiment(exp_name, suffix=str(job_id))
 
 
 # In[ ]:
@@ -215,7 +218,7 @@ f_runs = open(exp.get_filename("runs.csv"), "wb")
 f_values = open(exp.get_filename("values.csv"), "wb")
 runs_written = 0
 values_written = 0
-values_columns = ["rewire", "keep", "strategy", "trial", "step", "value"]
+values_columns = ["rewire", "keep", "strategy", "trial", "step", "value", "sample"]
 
 tasks_complete = 0
 while tasks_complete < total_tasks:
@@ -223,7 +226,7 @@ while tasks_complete < total_tasks:
         run_data, values = result_queue.get()
         rewire = run_data["rewire"]
         runs_columns = list(run_data.keys())
-        run_id = uid + "-" + str(runs_written)
+        run_id = uid + "-" + str(job_id) + "-" + str(runs_written)
         if runs_written == 0:
             # Write index
             f_runs.write(",")
@@ -235,13 +238,14 @@ while tasks_complete < total_tasks:
         for k in methods:
             for step, value in enumerate(values[k]):
                 d = [
-                    repr(values_written),
+                    run_id + '-' + str(values_written),
                     repr(run_data["rewire"]),
                     repr(run_data["keep"]),
                     k,
                     run_id,
                     repr(step),
-                    repr(value)]
+                    repr(value),
+                    repr(run_data["sample"])]
                 f_values.write(",".join(d) + "\n")
                 values_written += 1
         # Write run data
@@ -256,7 +260,7 @@ while tasks_complete < total_tasks:
         break
     except:
         traceback.print_exc()
-        break
+        break400
 f_runs.close()
 f_values.close()
 
