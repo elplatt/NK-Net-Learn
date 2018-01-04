@@ -24,9 +24,9 @@ import strategy
 
 # In[ ]:
 
-num_workers = 1
-per_rewire = 25
-steps = 10
+num_workers = 4
+per_rewire = 5
+steps = 300
 Ns = [250]
 Ks = [7]
 Ds = [2]
@@ -50,6 +50,7 @@ try:
 except KeyError:
     job_id = 0
 exp = logbook.Experiment(exp_name, suffix=str(job_id))
+log = exp.get_logger()
 
 
 # In[ ]:
@@ -256,11 +257,12 @@ while tasks_complete < total_tasks:
         f_values.flush()
         runs_written += 1
         tasks_complete += 1
+        log.info("%d of %d complete" % (tasks_complete, total_tasks))
     except Empty:
         break
     except:
         traceback.print_exc()
-        break400
+        break
 f_runs.close()
 f_values.close()
 
