@@ -32,7 +32,7 @@ Ks = [7]
 Ds = [2]
 rs = [float(x) / 6.0 for x in range(7)]
 keep = [1.0]
-samples = [0]
+samples = [3]
 
 methods = [
     "conform", "best",
