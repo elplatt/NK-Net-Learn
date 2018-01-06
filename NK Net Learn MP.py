@@ -24,7 +24,7 @@ import strategy
 
 # In[ ]:
 
-num_workers = 4
+num_workers = 3
 per_rewire = 5
 steps = 300
 Ns = [250]
@@ -175,6 +175,7 @@ def worker(task_queue, result_queue):
             except KeyError:
                 print N, K, D, r, k, steps, sample
             task_queue.task_done()
+            time.sleep(0)
     except Empty:
         return
 
@@ -223,6 +224,7 @@ values_columns = ["rewire", "keep", "strategy", "trial", "step", "value", "sampl
 
 tasks_complete = 0
 while tasks_complete < total_tasks:
+    time.sleep(60)
     try:
         run_data, values = result_queue.get()
         rewire = run_data["rewire"]
