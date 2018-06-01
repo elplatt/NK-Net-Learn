@@ -14,7 +14,7 @@ degree distribution. The main scripts support parallel processing using the
 
 ### NK Net Learn MP
 This is the main script that generates NK models and runs agent-based simulations.
-Several parameters can be adjsted, including: sampling, rewiring, strategies,
+Several parameters can be adjsted, including: number of cpu cores, sampling, rewiring, strategies,
 iterations per trial, total trials.
 
 ### Plot NK Network
