@@ -1,3 +1,4 @@
+import math
 import random
 
 def nk_to_network(model, nodes_per_locus, rewire=0):
@@ -48,8 +49,8 @@ def rewire_affiliation(model, edges_node_loc, rewire):
     to_rewire = random.sample(range(len(edges_node_loc)), rewire_count)
     random.shuffle(to_rewire)
     # Split sample in two and swap locations
-    sources = to_rewire[:len(to_rewire)/2]
-    targets = to_rewire[len(to_rewire)/2:]
+    sources = to_rewire[:math.floor(len(to_rewire)/2)]
+    targets = to_rewire[math.floor(len(to_rewire)/2):]
     for e in sources:
         t = targets.pop()
         source_node, source_loc = edges_node_loc[e]
@@ -75,7 +76,7 @@ def affiliation_to_node(edges_node_loc):
     edges_node = {}
     # For a source node and its loci, create edges to/from other nodes
     # dependent on those loci
-    for source, loci in loc_by_node.iteritems():
+    for source, loci in loc_by_node.items():
         for loc in loci:
             for target in node_by_loc[loc]:
                 if source == target:

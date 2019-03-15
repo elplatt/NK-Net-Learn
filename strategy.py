@@ -3,7 +3,7 @@ import net
 
 def edges_to_nodes(edges):
     nodes = set()
-    for s, targets in edges.iteritems():
+    for s, targets in edges.items():
         nodes.add(s)
         nodes = nodes | set(targets)
     return nodes
@@ -140,8 +140,8 @@ class Conformity(Strategy):
             if len(to_sample) == 0:
                 next_node_state = states[n]
             else:
-                max_counts = max([x[1] for x in state_counts.iteritems()])
-                max_states = [list(x[0]) for x in state_counts.iteritems() if x[1] == max_counts]
+                max_counts = max([x[1] for x in state_counts.items()])
+                max_states = [list(x[0]) for x in state_counts.items() if x[1] == max_counts]
                 next_node_state = random.choice(max_states)
             new_states[n] = next_node_state
         new_values = self.model.get_values(new_states)
@@ -179,15 +179,15 @@ class LocalIndividual(Strategy):
         self.nodes = nodes
         self.node_count = len(self.nodes)
         # Construct node->loc and loc-> node map
-        self.node_by_loc = dict([(l, set()) for l in xrange(model.N)])
+        self.node_by_loc = dict([(l, set()) for l in range(model.N)])
         self.loc_by_node = dict([(n, set()) for n in self.nodes])
         for edge in edges_node_loc:
             node, loc = edge
             self.node_by_loc[loc].add(node)
             self.loc_by_node[node].add(loc)
-        for k, v in self.node_by_loc.iteritems():
+        for k, v in self.node_by_loc.items():
             self.node_by_loc[k] = list(v)
-        for k, v in self.loc_by_node.iteritems():
+        for k, v in self.loc_by_node.items():
             self.loc_by_node[k] = list(v)
         # Set concern loci for each node
         if structured:
@@ -281,25 +281,24 @@ class LocalIndividualConsensus(Strategy):
         self.nodes = nodes
         self.node_count = len(self.nodes)
         # Create node->loc and loc->node mapping
-        self.node_by_loc = dict([(l, set()) for l in xrange(model.N)])
+        self.node_by_loc = dict([(l, set()) for l in range(model.N)])
         self.loc_by_node = dict([(n, set()) for n in self.nodes])
         for edge in edges_node_loc:
             node, loc = edge
             self.node_by_loc[loc].add(node)
             self.loc_by_node[node].add(loc)
-        for k, v in self.node_by_loc.iteritems():
+        for k, v in self.node_by_loc.items():
             self.node_by_loc[k] = list(v)
-        for k, v in self.loc_by_node.iteritems():
+        for k, v in self.loc_by_node.items():
             self.loc_by_node[k] = list(v)
         # Use NK structure for choosing hill-climbing loci
         self.concern = [self.loc_by_node[n] for n in self.nodes]        
     
     def get_next(self, states, values):
-        state = states.values()[0]
-        state_value = values.values()[0]
+        state = states[self.model.loci[0]]
+        state_value = values[self.model.loci[0]]
         N = self.model.N
         K = self.model.K
-        loci = range(N)
         # Each node's private preferred state after individual learning
         best_states = {}
         # Hill climbing for connected subset of NK cells
@@ -318,7 +317,7 @@ class LocalIndividualConsensus(Strategy):
         # Local (per-NK-cell) Consensus
         loc_total = [0] * self.model.N
         loc_count = [0] * self.model.N
-        for node, locs in self.loc_by_node.iteritems():
+        for node, locs in self.loc_by_node.items():
             try:
                 if self.sample == 0 or len(locs) <= self.sample:
                     to_sample = locs
