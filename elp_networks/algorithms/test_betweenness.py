@@ -1,5 +1,5 @@
 import unittest
-from betweenness import betweenness, recalculated_betweenness
+from elp_networks.algorithms.betweenness import betweenness, recalculated_betweenness
 
 weight_from_to = {
     ("A", "B"): 1,

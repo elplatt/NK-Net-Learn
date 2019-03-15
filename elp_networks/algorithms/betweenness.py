@@ -1,4 +1,4 @@
-from shortest_paths import floyd_warshall
+from elp_networks.algorithms.shortest_paths import floyd_warshall
 
 def betweenness(weights_from_to, normalized=True, distances=None, paths=None):
     nodes = set()

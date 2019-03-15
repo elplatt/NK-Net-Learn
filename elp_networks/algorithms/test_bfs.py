@@ -1,5 +1,5 @@
 import unittest
-from bfs import get_distances_bfs
+from elp_networks.algorithms.bfs import get_distances_bfs
 
 no_edges = {0:set()}
 tree_edges = {0:set([1,2]),1:set([3,4]),2:set([5,6])}

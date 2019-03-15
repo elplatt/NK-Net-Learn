@@ -1,4 +1,4 @@
-from network import *
+from elp_networks.network import *
 
 class Ring(Network):
     

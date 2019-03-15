@@ -1,5 +1,5 @@
 import unittest
-from shortest_paths import floyd_warshall
+from elp_networks.algorithms.shortest_paths import floyd_warshall
 
 weight_from_to = {
     ("A", "B"): 1,

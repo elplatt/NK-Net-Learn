@@ -1,5 +1,5 @@
 import unittest
-from min_cut import (
+from elp_networks.algorithms.min_cut import (
     dinic_unit_pairwise,
     edmonds_karp_pairwise
 )

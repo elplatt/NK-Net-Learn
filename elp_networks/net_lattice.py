@@ -1,5 +1,5 @@
 import math
-from network import *
+from elp_networks.network import *
 
 class Lattice(Network):
     """Generalized lattice."""
